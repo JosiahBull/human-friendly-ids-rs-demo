@@ -1,9 +1,8 @@
-FROM rust:1.85 AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
 
-RUN cargo install cargo-chef
-
 FROM chef AS planner
+
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
@@ -23,7 +22,5 @@ COPY --from=builder /app/target/release/human-friendly-ids-demo .
 COPY /static /app/static
 
 EXPOSE 8000
-ENV EXPECTED_USERNAME=your_username
-ENV EXPECTED_PASSWORD=your_password
 
 CMD ["./human-friendly-ids-demo"]
