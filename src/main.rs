@@ -1,0 +1,187 @@
+use human_friendly_ids::UploadId;
+use rocket::fs::NamedFile;
+use rocket::response::Redirect;
+use rocket::tokio::sync::RwLock;
+use rocket::{Request, State, get, http::Status, launch, post, routes, serde::json::Json};
+use rocket::{catch, catchers};
+use rocket_basicauth::BasicAuth;
+use rustrict::CensorStr as _;
+use serde::{Deserialize, Serialize};
+
+// Data structures
+#[derive(Debug, Deserialize, Serialize, Clone)]
+struct SubmissionRequest {
+    id: String,
+    username: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct SubmissionStats {
+    original_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    corrected_id: Option<String>,
+    was_valid: bool,
+    username: String,
+    timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+// Application state
+struct AppState {
+    submissions: RwLock<Vec<SubmissionStats>>,
+}
+
+// ID validation and correction logic
+fn process_id(id: String) -> Option<String> {
+    UploadId::try_from(id.to_string())
+        .map(|id| id.to_string())
+        .ok()
+}
+
+// Routes
+#[post("/submit", data = "<submission>")]
+async fn submit(
+    submission: Json<SubmissionRequest>,
+    state: &State<AppState>,
+) -> Json<SubmissionStats> {
+    let corrected_id = process_id(submission.id.clone());
+
+    let username = if submission.username.is_inappropriate() {
+        "naughty rustacean".to_string()
+    } else {
+        submission.username.clone()
+    };
+
+    let stats = SubmissionStats {
+        original_id: submission.id.clone(),
+        corrected_id: corrected_id.clone(),
+        username: username.clone(),
+        was_valid: corrected_id.is_some() && corrected_id.unwrap() == submission.id,
+        timestamp: chrono::Utc::now(),
+    };
+
+    state.submissions.write().await.push(stats.clone());
+
+    Json(stats)
+}
+
+#[get("/stats?<after>")]
+async fn stats(
+    state: &State<AppState>,
+    after: Option<String>,
+) -> Result<Json<Vec<SubmissionStats>>, Status> {
+    let after = after
+        .as_deref()
+        .map(chrono::DateTime::parse_from_rfc3339);
+    let after = match after {
+        Some(Ok(dt)) => Some(dt),
+        Some(Err(_)) => return Err(Status::BadRequest),
+        None => None,
+    };
+
+    let submissions = state.submissions.read().await;
+    let filtered_submissions: Vec<SubmissionStats> = match after {
+        Some(after) => submissions
+            .iter()
+            .filter(|s| s.timestamp > after)
+            .cloned()
+            .collect(),
+        None => submissions.clone(),
+    };
+    Ok(Json(filtered_submissions))
+}
+
+#[post("/reset-stats")]
+async fn reset_stats(state: &State<AppState>, auth: BasicAuth) -> Result<&'static str, Status> {
+    let expected_username = std::env::var("ADMIN_USERNAME").unwrap();
+    let expected_password = std::env::var("ADMIN_PASSWORD").unwrap();
+
+    if auth.username != expected_username || auth.password != expected_password {
+        return Err(Status::Unauthorized);
+    }
+
+    let mut submissions = state.submissions.write().await;
+    submissions.clear();
+    Ok("Statistics reset")
+}
+
+#[derive(Debug, Serialize)]
+struct MediaEntry {
+    /// The name of the media file, to be appended to /media/{name}
+    name: String,
+    /// The MIME type of the media file
+    /// Either:
+    /// - image/png
+    /// - audio/mpeg
+    r#type: String,
+    /// The "correct" answer for this media file
+    answer: String,
+}
+
+#[get("/medias")]
+async fn medias(auth: BasicAuth) -> Result<Json<Vec<MediaEntry>>, Status> {
+    let expected_username = std::env::var("ADMIN_USERNAME").unwrap();
+    let expected_password = std::env::var("ADMIN_PASSWORD").unwrap();
+
+    if auth.username != expected_username || auth.password != expected_password {
+        return Err(Status::Unauthorized);
+    }
+
+    // Read all .png and .mp3 files in static/media
+    let mut entries = Vec::new();
+    let media_dir = std::fs::read_dir("./static/media").unwrap();
+    for entry in media_dir {
+        let entry = entry.unwrap();
+        let name = entry.file_name().into_string().unwrap();
+        if name.ends_with(".png") || name.ends_with(".mp3") {
+            let txt_name = format!(
+                "{}.txt",
+                name.trim_end_matches(".png").trim_end_matches(".mp3")
+            );
+            let answer =
+                std::fs::read_to_string(format!("./static/media/{}", txt_name)).unwrap_or_default();
+
+            let r#type = if name.ends_with(".png") {
+                "image/png"
+            } else {
+                "audio/mpeg"
+            };
+
+            entries.push(MediaEntry {
+                name,
+                answer,
+                r#type: r#type.to_string(),
+            });
+        }
+    }
+
+    Ok(Json(entries))
+}
+
+#[get("/healthcheck")]
+fn healthcheck() -> &'static str {
+    "OK"
+}
+
+#[catch(401)]
+async fn unauthorized(_req: &Request<'_>) -> NamedFile {
+    NamedFile::open("./static/401.html").await.unwrap()
+}
+
+#[catch(404)]
+async fn not_found(_req: &Request<'_>) -> Redirect {
+    Redirect::to("/")
+}
+
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .manage(AppState {
+            submissions: RwLock::new(Vec::new()),
+        })
+        .mount(
+            "/",
+            routes![submit, stats, reset_stats, medias, healthcheck],
+        )
+        .mount("/", rocket::fs::FileServer::from("static"))
+        .register("/", catchers![not_found, unauthorized])
+}

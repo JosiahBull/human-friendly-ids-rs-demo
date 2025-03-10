@@ -1,0 +1,13 @@
+demo.josiahbull.com {
+    reverse_proxy localhost:8000
+
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10MB
+            roll_keep 5
+            roll_keep_for 720h
+        }
+    }
+
+    encode gzip zstd brotli
+}
