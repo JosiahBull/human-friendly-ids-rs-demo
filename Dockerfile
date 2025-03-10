@@ -14,7 +14,9 @@ COPY . .
 
 RUN cargo build --release
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
