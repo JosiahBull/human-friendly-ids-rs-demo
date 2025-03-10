@@ -24,6 +24,10 @@ docker-build triple=(arch() + "-unknown-linux-musl"):
 
     set -o errexit -o nounset -o pipefail
 
+    # Set the platform
+    arch=$(echo {{triple}} | cut -d'-' -f1)
+    platform="linux/$arch"
+
     # Initalise docker buildx
     docker buildx create --use
 

@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    image: ghcr.io/josiahbull/human-friendly-ids-rs-demo:latest
     env_file:
       - .env
     expose:
