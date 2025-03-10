@@ -39,4 +39,7 @@ RUN npm install -g eslint
 RUN cp -r /root/. /home/$USERNAME
 RUN chown -R $USERNAME:$USERNAME /home/$USERNAME
 
+# Ensure that the user can run docker commands
+RUN usermod -aG docker $USERNAME
+
 USER $USERNAME
