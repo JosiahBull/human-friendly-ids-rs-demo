@@ -29,6 +29,12 @@ RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugi
 RUN pip3 install thefuck
 RUN pip3 install pre-commit
 
+# Install nodejs 22 + prettier
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install -g prettier
+RUN npm install -g eslint
+
 # Copy everything over from /root to /home/$USERNAME
 RUN cp -r /root/. /home/$USERNAME
 RUN chown -R $USERNAME:$USERNAME /home/$USERNAME

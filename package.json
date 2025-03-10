@@ -1,0 +1,24 @@
+{
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/JosiahBull/human-friendly-ids-rs-demo/issues"
+  },
+  "description": "A simple webserver and client for the Christchurch Rust 2025 Meetup.",
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0"
+  },
+  "homepage": "https://github.com/JosiahBull/human-friendly-ids-rs-demo#readme",
+  "license": "ISC",
+  "main": "index.js",
+  "name": "human-friendly-ids-demo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JosiahBull/human-friendly-ids-rs-demo.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.0"
+}

@@ -69,9 +69,7 @@ async fn stats(
     state: &State<AppState>,
     after: Option<String>,
 ) -> Result<Json<Vec<SubmissionStats>>, Status> {
-    let after = after
-        .as_deref()
-        .map(chrono::DateTime::parse_from_rfc3339);
+    let after = after.as_deref().map(chrono::DateTime::parse_from_rfc3339);
     let after = match after {
         Some(Ok(dt)) => Some(dt),
         Some(Err(_)) => return Err(Status::BadRequest),

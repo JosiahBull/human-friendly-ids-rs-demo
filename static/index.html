@@ -1,330 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rust Meetup Christchurch</title>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
-  <style>
-    /* Global & Full-Screen Centering */
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: 'Open Sans', sans-serif;
-      background-color: #f9f9f9;
-    }
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-    .main-container {
-      width: 100%;
-      text-align: center;
-    }
-    /* Large Central Input (Search Bar Style) */
-    .search-form input[type="text"] {
-      width: 80%;
-      max-width: 600px;
-      font-size: 2rem;
-      padding: 1rem;
-      border: 2px solid #ccc;
-      border-radius: 4px;
-      outline: none;
-    }
-    .search-form button {
-      margin-top: 1rem;
-      padding: 0.8rem 1.2rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 4px;
-      background-color: #007acc;
-      color: #fff;
-      cursor: pointer;
-    }
-    /* Logout Button */
-    #logout-button {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      background-color: #007acc;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    /* History Button */
-    #history-button {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      background-color: #007acc;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    /* Username Overlay for First-Time Entry */
-    #username-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(249, 249, 249, 0.95);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #username-overlay form {
-      text-align: center;
-    }
-    #username-overlay input[type="text"] {
-      width: 300px;
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 2px solid #ccc;
-      border-radius: 4px;
-    }
-    #username-overlay button {
-      background-color: #007acc;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    /* Toast Container & Styles */
-    #toast-container {
-      position: fixed;
-      top: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1100;
-    }
-    .toast {
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 4px;
-      color: #fff;
-      opacity: 0.9;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      animation: fadein 0.5s, fadeout 0.5s 3.5s;
-    }
-    @keyframes fadein {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 0.9; transform: translateY(0); }
-    }
-    @keyframes fadeout {
-      from { opacity: 0.9; }
-      to { opacity: 0; }
-    }
-    .toast.success {
-      background-color: #4caf50;
-    }
-    .toast.error {
-      background-color: #f44336;
-    }
-    /* New style for corrected submissions */
-    .toast.corrected {
-      background-color: orange;
-    }
-    /* History Dropdown Styles */
-    #history-dropdown {
-      display: none;
-      position: fixed;
-      top: 3rem;
-      left: 1rem;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow-y: auto;
-      width: 300px;
-      z-index: 1100;
-      padding: 0.5rem;
-    }
-    #history-dropdown ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    #history-dropdown li {
-      padding: 0.5rem;
-      border-bottom: 1px solid #eee;
-      font-size: 0.9rem;
-    }
-    #history-dropdown li:last-child {
-      border-bottom: none;
-    }
-  </style>
-</head>
-<body>
-  <!-- History Button -->
-  <button id="history-button">History</button>
-
-  <!-- Logout Button (visible when username exists) -->
-  <button id="logout-button" style="display:none;">Logout</button>
-
-  <!-- History Dropdown Container -->
-  <div id="history-dropdown">
-    <ul id="history-list"></ul>
-  </div>
-
-  <!-- Main Search Bar Container -->
-  <div class="main-container">
-    <form id="submission-form" class="search-form">
-      <input type="text" id="submission-id" name="submission-id" placeholder="Enter your string/ID" aria-label="Enter your string/ID" required>
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-
-  <!-- Username Overlay (if username not set) -->
-  <div id="username-overlay" style="display:none;">
-    <form id="username-form">
-      <p>Please enter your username:</p>
-      <input type="text" id="username" name="username" placeholder="Username" aria-label="Enter your username" required>
-      <button type="submit">Save Username</button>
-    </form>
-  </div>
-
-  <!-- Toast Notifications -->
-  <div id="toast-container"></div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const usernameOverlay = document.getElementById('username-overlay');
-      const usernameForm = document.getElementById('username-form');
-      const logoutButton = document.getElementById('logout-button');
-      const submissionForm = document.getElementById('submission-form');
-      const toastContainer = document.getElementById('toast-container');
-      const historyButton = document.getElementById('history-button');
-      const historyDropdown = document.getElementById('history-dropdown');
-      const historyList = document.getElementById('history-list');
-
-      // Keep submission history in memory.
-      let submissionHistory = [];
-
-      // Toggle history dropdown visibility.
-      historyButton.addEventListener('click', function() {
-        if (historyDropdown.style.display === 'none' || historyDropdown.style.display === '') {
-          historyDropdown.style.display = 'block';
-        } else {
-          historyDropdown.style.display = 'none';
-        }
-      });
-
-      // Check for stored username; if absent, show overlay to set one.
-      const savedUsername = localStorage.getItem('username');
-      if (!savedUsername) {
-        usernameOverlay.style.display = 'flex';
-      } else {
-        usernameOverlay.style.display = 'none';
-        logoutButton.style.display = 'block';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rust Meetup Christchurch</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Global & Full-Screen Centering */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: "Open Sans", sans-serif;
+        background-color: #f9f9f9;
       }
-
-      // Username form submission to save username.
-      usernameForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const usernameInput = document.getElementById('username').value.trim();
-        if (usernameInput) {
-          localStorage.setItem('username', usernameInput);
-          usernameOverlay.style.display = 'none';
-          logoutButton.style.display = 'block';
-        }
-      });
-
-      // Logout functionality: clear username and reload page.
-      logoutButton.addEventListener('click', function() {
-        localStorage.removeItem('username');
-        location.reload();
-      });
-
-      // Function to display toast messages.
-      function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = 'toast ' + type;
-        toast.textContent = message;
-        toastContainer.appendChild(toast);
-        setTimeout(() => {
-          toastContainer.removeChild(toast);
-        }, 4000);
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
       }
-
-      // Update the history dropdown list.
-      function updateHistory() {
-        historyList.innerHTML = '';
-        submissionHistory.forEach(entry => {
-          const li = document.createElement('li');
-          li.textContent = `[${entry.timestamp}] ${entry.submission} -> ${entry.result}`;
-          historyList.appendChild(li);
-        });
+      .main-container {
+        width: 100%;
+        text-align: center;
       }
-
-      // Handle submission form.
-      submissionForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const submissionInput = document.getElementById('submission-id');
-        const submissionId = submissionInput.value.trim();
-        if (!submissionId) {
-          showToast('Please enter a valid string/ID.', 'error');
-          return;
+      /* Large Central Input (Search Bar Style) */
+      .search-form input[type="text"] {
+        width: 80%;
+        max-width: 600px;
+        font-size: 2rem;
+        padding: 1rem;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+      }
+      .search-form button {
+        margin-top: 1rem;
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #007acc;
+        color: #fff;
+        cursor: pointer;
+      }
+      /* Logout Button */
+      #logout-button {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background-color: #007acc;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      /* History Button */
+      #history-button {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        background-color: #007acc;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      /* Username Overlay for First-Time Entry */
+      #username-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(249, 249, 249, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #username-overlay form {
+        text-align: center;
+      }
+      #username-overlay input[type="text"] {
+        width: 300px;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+      }
+      #username-overlay button {
+        background-color: #007acc;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      /* Toast Container & Styles */
+      #toast-container {
+        position: fixed;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1100;
+      }
+      .toast {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 4px;
+        color: #fff;
+        opacity: 0.9;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: fadein 0.5s, fadeout 0.5s 3.5s;
+      }
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
         }
-        const username = localStorage.getItem('username');
-        const payload = { id: submissionId, username: username };
+        to {
+          opacity: 0.9;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeout {
+        from {
+          opacity: 0.9;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      .toast.success {
+        background-color: #4caf50;
+      }
+      .toast.error {
+        background-color: #f44336;
+      }
+      /* New style for corrected submissions */
+      .toast.corrected {
+        background-color: orange;
+      }
+      /* History Dropdown Styles */
+      #history-dropdown {
+        display: none;
+        position: fixed;
+        top: 3rem;
+        left: 1rem;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        width: 300px;
+        z-index: 1100;
+        padding: 0.5rem;
+      }
+      #history-dropdown ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #history-dropdown li {
+        padding: 0.5rem;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9rem;
+      }
+      #history-dropdown li:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- History Button -->
+    <button id="history-button">History</button>
 
-        fetch('/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-          // Using the new response format:
-          // data.original_id, data.corrected_id, data.was_valid, data.username, data.timestamp
-          let message = '';
-          let toastType = '';
-          if (data.corrected_id) {
-            if (data.was_valid) {
-              // Correct submission without any correction needed.
-              message = `Submission accepted: ${data.corrected_id} (correct)`;
-              toastType = 'success';
-            } else {
-              // Submission was incorrect, but we could auto-correct it.
-              message = `Submission corrected: ${data.corrected_id} (was corrected)`;
-              toastType = 'corrected';
-            }
+    <!-- Logout Button (visible when username exists) -->
+    <button id="logout-button" style="display: none">Logout</button>
+
+    <!-- History Dropdown Container -->
+    <div id="history-dropdown">
+      <ul id="history-list"></ul>
+    </div>
+
+    <!-- Main Search Bar Container -->
+    <div class="main-container">
+      <form id="submission-form" class="search-form">
+        <input
+          type="text"
+          id="submission-id"
+          name="submission-id"
+          placeholder="Enter your string/ID"
+          aria-label="Enter your string/ID"
+          required
+        />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- Username Overlay (if username not set) -->
+    <div id="username-overlay" style="display: none">
+      <form id="username-form">
+        <p>Please enter your username:</p>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Username"
+          aria-label="Enter your username"
+          required
+        />
+        <button type="submit">Save Username</button>
+      </form>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const usernameOverlay = document.getElementById("username-overlay");
+        const usernameForm = document.getElementById("username-form");
+        const logoutButton = document.getElementById("logout-button");
+        const submissionForm = document.getElementById("submission-form");
+        const toastContainer = document.getElementById("toast-container");
+        const historyButton = document.getElementById("history-button");
+        const historyDropdown = document.getElementById("history-dropdown");
+        const historyList = document.getElementById("history-list");
+
+        // Keep submission history in memory.
+        let submissionHistory = [];
+
+        // Toggle history dropdown visibility.
+        historyButton.addEventListener("click", function () {
+          if (
+            historyDropdown.style.display === "none" ||
+            historyDropdown.style.display === ""
+          ) {
+            historyDropdown.style.display = "block";
           } else {
-            // Submission was entirely wrong with no correction possible.
-            message = 'Submission failed: unable to correct your input.';
-            toastType = 'error';
+            historyDropdown.style.display = "none";
           }
-          showToast(message, toastType);
-          // Record the submission in history.
-          const historyEntry = {
-            submission: submissionId,
-            result: message,
-            timestamp: new Date().toLocaleTimeString()
-          };
-          submissionHistory.push(historyEntry);
-          updateHistory();
-          submissionForm.reset();
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showToast('An error occurred. Please try again.', 'error');
+        });
+
+        // Check for stored username; if absent, show overlay to set one.
+        const savedUsername = localStorage.getItem("username");
+        if (!savedUsername) {
+          usernameOverlay.style.display = "flex";
+        } else {
+          usernameOverlay.style.display = "none";
+          logoutButton.style.display = "block";
+        }
+
+        // Username form submission to save username.
+        usernameForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const usernameInput = document
+            .getElementById("username")
+            .value.trim();
+          if (usernameInput) {
+            localStorage.setItem("username", usernameInput);
+            usernameOverlay.style.display = "none";
+            logoutButton.style.display = "block";
+          }
+        });
+
+        // Logout functionality: clear username and reload page.
+        logoutButton.addEventListener("click", function () {
+          localStorage.removeItem("username");
+          location.reload();
+        });
+
+        // Function to display toast messages.
+        function showToast(message, type) {
+          const toast = document.createElement("div");
+          toast.className = "toast " + type;
+          toast.textContent = message;
+          toastContainer.appendChild(toast);
+          setTimeout(() => {
+            toastContainer.removeChild(toast);
+          }, 4000);
+        }
+
+        // Update the history dropdown list.
+        function updateHistory() {
+          historyList.innerHTML = "";
+          submissionHistory.forEach((entry) => {
+            const li = document.createElement("li");
+            li.textContent = `[${entry.timestamp}] ${entry.submission} -> ${entry.result}`;
+            historyList.appendChild(li);
+          });
+        }
+
+        // Handle submission form.
+        submissionForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const submissionInput = document.getElementById("submission-id");
+          const submissionId = submissionInput.value.trim();
+          if (!submissionId) {
+            showToast("Please enter a valid string/ID.", "error");
+            return;
+          }
+          const username = localStorage.getItem("username");
+          const payload = { id: submissionId, username: username };
+
+          fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Using the new response format:
+              // data.original_id, data.corrected_id, data.was_valid, data.username, data.timestamp
+              let message = "";
+              let toastType = "";
+              if (data.corrected_id) {
+                if (data.was_valid) {
+                  // Correct submission without any correction needed.
+                  message = `Submission accepted: ${data.corrected_id} (correct)`;
+                  toastType = "success";
+                } else {
+                  // Submission was incorrect, but we could auto-correct it.
+                  message = `Submission corrected: ${data.corrected_id} (was corrected)`;
+                  toastType = "corrected";
+                }
+              } else {
+                // Submission was entirely wrong with no correction possible.
+                message = "Submission failed: unable to correct your input.";
+                toastType = "error";
+              }
+              showToast(message, toastType);
+              // Record the submission in history.
+              const historyEntry = {
+                submission: submissionId,
+                result: message,
+                timestamp: new Date().toLocaleTimeString(),
+              };
+              submissionHistory.push(historyEntry);
+              updateHistory();
+              submissionForm.reset();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              showToast("An error occurred. Please try again.", "error");
+            });
         });
       });
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>

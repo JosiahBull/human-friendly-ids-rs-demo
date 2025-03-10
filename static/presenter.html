@@ -1,67 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rust Meetup Christchurch - Presenters</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="presenter.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rust Meetup Christchurch - Presenters</title>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="presenter.css" />
-</head>
-
-<body>
-  <!-- Login Modal -->
-  <div id="login-modal">
-    <div>
-      <h2>Admin Login</h2>
-      <form id="login-form">
-        <div>
-          <label for="username">Username:</label>
-          <input type="text" id="username" required />
-        </div>
-        <div>
-          <label for="password">Password:</label>
-          <input type="password" id="password" required />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-content hidden">
-    <header>
-      <h1>LIVE SUBMISSIONS - <span id="answer" class="blurred-text"></span></h1>
-      <button id="logout-button" aria-label="Logout">Logout</button>
-    </header>
-
-    <div id="media-container"></div>
-    <div id="toast-container"></div>
-
-    <section class="panels">
-      <div class="panel" id="recent-submissions-panel">
-        <h2>Recent Submissions</h2>
-        <ul id="recent-submissions"></ul>
+  <body>
+    <!-- Login Modal -->
+    <div id="login-modal">
+      <div>
+        <h2>Admin Login</h2>
+        <form id="login-form">
+          <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" required />
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required />
+          </div>
+          <button type="submit">Login</button>
+        </form>
       </div>
-      <div class="panel" id="top-codes-panel">
-        <h2>Top Codes</h2>
-        <ul id="top-codes"></ul>
-      </div>
-    </section>
-
-    <div class="container">
-      <button id="next-button" accesskey="n">Next</button>
-      <button id="toggle-names">Toggle Names</button>
-      <button id="toggle-blur">Show Submission Text</button>
-      <button id="toggle-answer">Show Answer</button>
     </div>
 
-    <footer>
-      <p>&copy; 2025 Rust Christchurch Conference</p>
-    </footer>
-  </div>
+    <!-- Main Content -->
+    <div class="main-content hidden">
+      <header>
+        <h1>
+          LIVE SUBMISSIONS - <span id="answer" class="blurred-text"></span>
+        </h1>
+        <button id="logout-button" aria-label="Logout">Logout</button>
+      </header>
 
-  <script src="presenter.js" defer></script>
-</body>
+      <div id="media-container"></div>
+      <div id="toast-container"></div>
 
+      <section class="panels">
+        <div class="panel" id="recent-submissions-panel">
+          <h2>Recent Submissions</h2>
+          <ul id="recent-submissions"></ul>
+        </div>
+        <div class="panel" id="top-codes-panel">
+          <h2>Top Codes</h2>
+          <ul id="top-codes"></ul>
+        </div>
+      </section>
+
+      <div class="container">
+        <button id="next-button" accesskey="n">Next</button>
+        <button id="toggle-names">Toggle Names</button>
+        <button id="toggle-blur">Show Submission Text</button>
+        <button id="toggle-answer">Show Answer</button>
+      </div>
+
+      <footer>
+        <p>&copy; 2025 Rust Christchurch Conference</p>
+      </footer>
+    </div>
+
+    <script src="presenter.js" defer></script>
+  </body>
 </html>
