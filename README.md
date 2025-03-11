@@ -2,6 +2,8 @@
 
 A simple webserver and client for the Christchurch Rust 2025 Meetup.
 
+Slides can be found here: https://docs.google.com/presentation/d/1AMA4nbFHyPek4PkgP5VKtGPdhmmeV__IFPDUxTRO5R4/edit?usp=sharing
+
 ## Running the server
 
 ```bash

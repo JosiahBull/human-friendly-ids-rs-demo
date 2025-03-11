@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use human_friendly_ids::UploadId;
 use rocket::fs::NamedFile;
 use rocket::response::Redirect;
@@ -7,7 +9,6 @@ use rocket::{catch, catchers};
 use rocket_basicauth::BasicAuth;
 use rustrict::CensorStr as _;
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
 
 // Data structures
 #[derive(Debug, Deserialize, Serialize, Clone)]

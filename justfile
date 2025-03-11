@@ -11,7 +11,6 @@ codegen:
 # Run formatting
 format:
     @cargo +nightly fmt
-    @cargo autoinherit
 
 # Run tests and check for unused dependencies
 test:
