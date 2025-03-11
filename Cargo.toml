@@ -8,12 +8,13 @@ rocket = { version = "0.5.0", features = ["json", "tls", "serde_json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rocket-basicauth = "3.0.0"
-human-friendly-ids = "0.1.1"
+human-friendly-ids = { git = "https://github.com/JosiahBull/human-friendly-ids-rs", branch = "main" }
 chrono = { version = "0.4.40", features = ["serde"] }
 rustrict = "0.7.34"
+rand = "0.9.0"
 
 [profile.release]
-lto = true
-codegen-units = 1
-opt-level = 3
+# lto = true
+# codegen-units = 1
+# opt-level = 3
 debug = true

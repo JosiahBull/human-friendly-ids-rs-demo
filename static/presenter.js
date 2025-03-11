@@ -47,8 +47,9 @@
       element.appendChild(source);
     }
 
-    element.dataset.answer = currentMedia.answer;
-    document.getElementById("answer").textContent = currentMedia.answer;
+    // Set the corrected_answer as the answer to display
+    element.dataset.answer = currentMedia.corrected_answer;
+    document.getElementById("answer").textContent = currentMedia.corrected_answer;
 
     container.appendChild(element);
   }
@@ -58,16 +59,13 @@
     const diff = Math.floor((new Date() - new Date(timestamp)) / 1000);
     if (diff < 60) return `${diff} second${diff !== 1 ? "s" : ""} ago`;
     if (diff < 3600)
-      return `${Math.floor(diff / 60)} minute${
-        Math.floor(diff / 60) !== 1 ? "s" : ""
-      } ago`;
+      return `${Math.floor(diff / 60)} minute${Math.floor(diff / 60) !== 1 ? "s" : ""
+        } ago`;
     if (diff < 86400)
-      return `${Math.floor(diff / 3600)} hour${
-        Math.floor(diff / 3600) !== 1 ? "s" : ""
+      return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) !== 1 ? "s" : ""
+        } ago`;
+    return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) !== 1 ? "s" : ""
       } ago`;
-    return `${Math.floor(diff / 86400)} day${
-      Math.floor(diff / 86400) !== 1 ? "s" : ""
-    } ago`;
   }
 
   // Update recent submissions list
@@ -85,29 +83,38 @@
           : submission.username;
         if (showCrustacean) usernameSpan.dataset.original = submission.username;
 
+        const currentMedia = mediaEntries[currentMediaIndex];
+        if (!currentMedia) return;
+
         const codeSpan = document.createElement("span");
-        codeSpan.innerHTML = ` - <span class="${
-          isBlurred ? "blurred-text" : ""
-        }">${submission.original_id}</span>
-            <span class="${isBlurred ? "blurred-text" : ""}">(${
-          submission.corrected_id || "N/A"
-        })</span>
-             - ${
-               submission.was_valid ? "Correct" : "Incorrect"
-             } - ${formatTimeAgo(submission.timestamp)}`;
+        codeSpan.innerHTML = ` - <span class="${isBlurred ? "blurred-text" : ""
+          }">${submission.original_id}</span>
+            <span class="${isBlurred ? "blurred-text" : ""}">(${submission.corrected_id || "N/A"
+          })</span>
+             - ${(submission.was_valid && (submission.original_id === currentMedia.uncorrected_answer || submission.original_id === currentMedia.corrected_answer)) ? "Correct" : "Incorrect"
+          } - ${formatTimeAgo(submission.timestamp)}`;
 
         li.appendChild(usernameSpan);
         li.appendChild(codeSpan);
 
-        // Set color based on validity and correction status:
-        // - Correct: green (#4caf50)
-        // - Wrong with correction: orange
-        // - Wrong without correction: red (#f44336)
-        li.style.color = submission.was_valid
-          ? "#4caf50"
-          : submission.corrected_id
-          ? "orange"
-          : "#f44336";
+        // Determine color based on media's answers
+        const mediaUncorrected = currentMedia.uncorrected_answer;
+        const mediaCorrected = currentMedia.corrected_answer;
+
+        const originalValid = submission.original_id === mediaUncorrected || submission.original_id === mediaCorrected;
+        const correctedValid = submission.corrected_id
+          ? (submission.corrected_id === mediaUncorrected || submission.corrected_id === mediaCorrected)
+          : false;
+
+        let color;
+        if (originalValid && correctedValid) {
+          color = "#4caf50"; // Green
+        } else if (originalValid || correctedValid) {
+          color = "orange"; // Yellow
+        } else {
+          color = "#f44336"; // Red
+        }
+        li.style.color = color;
 
         list.appendChild(li);
       });
@@ -130,9 +137,8 @@
         codeSpan.textContent = code;
         if (isBlurred) codeSpan.classList.add("blurred-text");
         const countSpan = document.createElement("span");
-        countSpan.textContent = ` - ${count} submission${
-          count !== 1 ? "s" : ""
-        }`;
+        countSpan.textContent = ` - ${count} submission${count !== 1 ? "s" : ""
+          }`;
         li.appendChild(codeSpan);
         li.appendChild(countSpan);
         list.appendChild(li);
@@ -183,6 +189,10 @@
   function resetStats() {
     isBlurred = true;
     blurAnswer = true;
+    document.getElementById("answer").classList.add("blurred-text");
+    document.getElementById("toggle-answer").textContent = "Show Answer";
+    document.getElementById("toggle-blur").textContent = "Show Submission Text";
+
     all_submissions = [];
     fetch("/reset-stats", {
       method: "POST",

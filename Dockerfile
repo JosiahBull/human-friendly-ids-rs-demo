@@ -25,4 +25,6 @@ COPY /static /app/static
 
 EXPOSE 8000
 
+ENV ROCKET_ADDRESS=0.0.0.0
+ENV ROCKET_PORT=8000
 CMD ["./human-friendly-ids-demo"]

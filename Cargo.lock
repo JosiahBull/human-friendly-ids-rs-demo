@@ -520,8 +520,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 [[package]]
 name = "human-friendly-ids"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02fe03d73e43b0348d41cbc3f11bbc554dbfb71a092065c6ec258ea0195e334e"
+source = "git+https://github.com/JosiahBull/human-friendly-ids-rs?branch=main#d27fc0db025fb747dad2f63ee39ba64525b327ff"
 dependencies = [
  "rand 0.9.0",
  "thiserror",
@@ -533,6 +532,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "human-friendly-ids",
+ "rand 0.9.0",
  "rocket",
  "rocket-basicauth",
  "rustrict",
